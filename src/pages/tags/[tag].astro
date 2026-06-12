@@ -1,0 +1,36 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import IdeaList from '@/components/IdeaList.astro';
+import { getCollection } from 'astro:content';
+import { sortByUpdatedDesc } from '@/lib/ideas';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths = (async () => {
+  const allIdeas = await getCollection('ideas');
+  const tags = new Set(allIdeas.flatMap((idea) => idea.data.tags));
+  return [...tags].map((tag) => {
+    const ideas = sortByUpdatedDesc(
+      allIdeas.filter((idea) => idea.data.tags.includes(tag)),
+    );
+    return {
+      params: { tag },
+      props: { tag, ideas },
+    };
+  });
+}) satisfies GetStaticPaths;
+
+const { tag, ideas } = Astro.props;
+---
+
+<BaseLayout title={`Tag: ${tag}`} wide>
+  <p class="page-eyebrow">Tagged</p>
+  <h1>#{tag}</h1>
+  <p class="lead">
+    {ideas.length} {ideas.length === 1 ? 'note grows' : 'notes grow'} under this
+    tag.
+  </p>
+  <IdeaList ideas={ideas} />
+  <nav class="entry-footer-nav" aria-label="Tags">
+    <a href="/tags">← All tags</a>
+  </nav>
+</BaseLayout>

@@ -1,0 +1,22 @@
+{
+  "name": "weekly-review-wiki",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "validate": "node scripts/validate-content.mjs",
+    "prebuild": "npm run validate",
+    "build": "astro build && pagefind --site dist",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.15",
+    "astro": "^5.7.10"
+  },
+  "devDependencies": {
+    "gray-matter": "^4.0.3",
+    "pagefind": "^1.3.0",
+    "typescript": "^5.8.3",
+    "zod": "^3.24.2"
+  }
+}

@@ -1,0 +1,117 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import IdeaCard from '@/components/IdeaCard.astro';
+import { getCollection } from 'astro:content';
+import { sortByUpdatedDesc } from '@/lib/ideas';
+
+const allIdeas = sortByUpdatedDesc(await getCollection('ideas'));
+const allTags = [...new Set(allIdeas.flatMap((i) => i.data.tags))].sort();
+---
+
+<BaseLayout title="Ideas" wide>
+  <p class="page-eyebrow">The whole garden</p>
+  <h1>All Ideas</h1>
+  <p class="lead">
+    {allIdeas.length} notes growing here — sort and filter to find a path
+    through them.
+  </p>
+
+  <div class="filters no-print">
+    <label for="sort-select">Sort</label>
+    <select id="sort-select" aria-label="Sort ideas">
+      <option value="updated-desc">Updated (newest)</option>
+      <option value="updated-asc">Updated (oldest)</option>
+      <option value="added-desc">Added (newest)</option>
+      <option value="maturity">Maturity</option>
+    </select>
+
+    <label for="tag-filter">Tag</label>
+    <select id="tag-filter" aria-label="Filter by tag">
+      <option value="">All tags</option>
+      {allTags.map((tag) => (
+        <option value={tag}>{tag}</option>
+      ))}
+    </select>
+
+    <label for="maturity-filter">Maturity</label>
+    <select id="maturity-filter" aria-label="Filter by maturity">
+      <option value="">All</option>
+      <option value="seedling">🌱 Seedling</option>
+      <option value="budding">🌿 Budding</option>
+      <option value="evergreen">🌳 Evergreen</option>
+    </select>
+  </div>
+
+  <ul class="idea-list" id="ideas-list">
+    {allIdeas.map((idea) => <IdeaCard idea={idea} />)}
+  </ul>
+</BaseLayout>
+
+<script>
+  const list = document.getElementById('ideas-list');
+  const sortSelect = document.getElementById('sort-select') as HTMLSelectElement;
+  const tagFilter = document.getElementById('tag-filter') as HTMLSelectElement;
+  const maturityFilter = document.getElementById('maturity-filter') as HTMLSelectElement;
+
+  if (list && sortSelect && tagFilter && maturityFilter) {
+  const items = Array.from(list.children) as HTMLLIElement[];
+
+  const maturityOrder: Record<string, number> = {
+    seedling: 0,
+    budding: 1,
+    evergreen: 2,
+  };
+
+  function getCardData(li: HTMLLIElement) {
+    const card = li.querySelector('.idea-card');
+    if (!card) return null;
+    const added = card.dataset.added ?? '';
+    const updated = card.dataset.updated ?? '';
+    return {
+      li,
+      maturity: card.dataset.maturity ?? '',
+      tags: (card.dataset.tags ?? '').split(',').filter(Boolean),
+      added: new Date(added).getTime(),
+      updated: new Date(updated).getTime(),
+    };
+  }
+
+  const cardData = items.map(getCardData).filter(Boolean) as NonNullable<
+    ReturnType<typeof getCardData>
+  >[];
+
+  function applyFilters() {
+    const tag = tagFilter.value;
+    const maturity = maturityFilter.value;
+
+    cardData.forEach(({ li, tags, maturity: m }) => {
+      const tagMatch = !tag || tags.includes(tag);
+      const maturityMatch = !maturity || m === maturity;
+      li.classList.toggle('hidden', !tagMatch || !maturityMatch);
+    });
+  }
+
+  function applySort() {
+    const mode = sortSelect.value;
+    const sorted = [...cardData];
+
+    sorted.sort((a, b) => {
+      if (mode === 'updated-desc') return b.updated - a.updated;
+      if (mode === 'updated-asc') return a.updated - b.updated;
+      if (mode === 'added-desc') return b.added - a.added;
+      if (mode === 'maturity') {
+        return (
+          (maturityOrder[a.maturity] ?? 0) - (maturityOrder[b.maturity] ?? 0)
+        );
+      }
+      return b.updated - a.updated;
+    });
+
+    sorted.forEach(({ li }) => list.appendChild(li));
+  }
+
+  sortSelect.addEventListener('change', applySort);
+  tagFilter.addEventListener('change', applyFilters);
+  maturityFilter.addEventListener('change', applyFilters);
+  }
+</script>

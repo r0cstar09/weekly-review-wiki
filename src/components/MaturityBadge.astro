@@ -1,0 +1,11 @@
+---
+import { MATURITY_LABELS } from '@/lib/icons';
+
+interface Props {
+  maturity: 'seedling' | 'budding' | 'evergreen';
+}
+
+const { maturity } = Astro.props;
+---
+
+<span class={`badge badge--${maturity}`}>{MATURITY_LABELS[maturity]}</span>

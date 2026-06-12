@@ -1,0 +1,39 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import IdeaList from '@/components/IdeaList.astro';
+import {
+  formatMonthKey,
+  getArchiveMonths,
+  getMonthKey,
+  sortByUpdatedDesc,
+} from '@/lib/ideas';
+import { getCollection } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths = (async () => {
+  const allIdeas = await getCollection('ideas');
+  const months = [...getArchiveMonths(allIdeas).keys()];
+
+  return months.map((month) => ({
+    params: { month },
+    props: {
+      month,
+      ideas: sortByUpdatedDesc(
+        allIdeas.filter((idea) => getMonthKey(idea.data.updated) === month),
+      ),
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+const { month, ideas } = Astro.props;
+---
+
+<BaseLayout title={`Archive: ${formatMonthKey(month)}`} wide>
+  <p class="page-eyebrow">From the archive</p>
+  <h1>{formatMonthKey(month)}</h1>
+  <p class="lead">{ideas.length} {ideas.length === 1 ? 'note' : 'notes'} tended this month.</p>
+  <IdeaList ideas={ideas} />
+  <nav class="entry-footer-nav" aria-label="Archive">
+    <a href="/archive">← Back to archive</a>
+  </nav>
+</BaseLayout>

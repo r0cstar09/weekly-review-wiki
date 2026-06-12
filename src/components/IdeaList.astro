@@ -1,0 +1,19 @@
+---
+import IdeaCard from '@/components/IdeaCard.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  ideas: CollectionEntry<'ideas'>[];
+  emptyMessage?: string;
+}
+
+const { ideas, emptyMessage = 'No entries yet.' } = Astro.props;
+---
+
+{ideas.length > 0 ? (
+  <ul class="idea-list">
+    {ideas.map((idea) => <IdeaCard idea={idea} />)}
+  </ul>
+) : (
+  <p class="empty">{emptyMessage}</p>
+)}

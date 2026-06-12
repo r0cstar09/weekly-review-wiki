@@ -1,0 +1,76 @@
+---
+import { getCollection } from 'astro:content';
+import {
+  formatMonthKey,
+  formatShortDate,
+  getArchiveMonths,
+  getTagCounts,
+  sortByUpdatedDesc,
+} from '@/lib/ideas';
+
+const path = Astro.url.pathname;
+const ideas = sortByUpdatedDesc(await getCollection('ideas'));
+const tagCounts = [...getTagCounts(ideas).entries()].sort((a, b) => b[1] - a[1]);
+const archiveMonths = [...getArchiveMonths(ideas).entries()];
+const recent = ideas.slice(0, 5);
+---
+
+<aside class="wiki-sidebar no-print" aria-label="Wiki navigation">
+  <section class="sidebar-section">
+    <h2>Topics</h2>
+    <ul class="sidebar-link-list">
+      {tagCounts.map(([tag, count]) => {
+        const href = `/tags/${encodeURIComponent(tag)}`;
+        return (
+          <li>
+            <a href={href} aria-current={path === `${href}/` ? 'page' : undefined}>
+              <span>{tag}</span>
+              <span>{count}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+
+  <section class="sidebar-section">
+    <h2>Dates</h2>
+    <ul class="sidebar-link-list">
+      {archiveMonths.map(([month, count]) => {
+        const href = `/archive/${month}`;
+        return (
+          <li>
+            <a href={href} aria-current={path === `${href}/` ? 'page' : undefined}>
+              <span>{formatMonthKey(month)}</span>
+              <span>{count}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+    <a class="sidebar-all-link" href="/archive">All archive dates</a>
+  </section>
+
+  <section class="sidebar-section">
+    <h2>Recently Tended</h2>
+    <ol class="sidebar-recent-list">
+      {recent.map((idea) => (
+        <li>
+          <a href={`/ideas/${idea.slug}`}>{idea.data.title}</a>
+          <time datetime={idea.data.updated.toISOString()}>
+            {formatShortDate(idea.data.updated)}
+          </time>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="sidebar-section">
+    <h2>Garden Key</h2>
+    <ul class="sidebar-legend">
+      <li>🌱 <span><strong>Seedling</strong> — a fresh, fragile thought</span></li>
+      <li>🌿 <span><strong>Budding</strong> — growing, gaps remain</span></li>
+      <li>🌳 <span><strong>Evergreen</strong> — proven in real use</span></li>
+    </ul>
+  </section>
+</aside>

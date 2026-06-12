@@ -1,0 +1,64 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import IdeaList from '@/components/IdeaList.astro';
+import { SITE } from '@/site.config';
+import { getCollection } from 'astro:content';
+import { getTagCounts, getThisWeek, sortByUpdatedDesc } from '@/lib/ideas';
+
+const allIdeas = await getCollection('ideas');
+const thisWeek = getThisWeek(allIdeas);
+const recent = sortByUpdatedDesc(allIdeas).slice(0, 6);
+
+const topicCount = getTagCounts(allIdeas).size;
+const maturityCounts = { seedling: 0, budding: 0, evergreen: 0 };
+for (const idea of allIdeas) {
+  maturityCounts[idea.data.maturity] += 1;
+}
+const total = allIdeas.length;
+const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
+---
+
+<BaseLayout>
+  <header class="hero">
+    <p class="hero__eyebrow">A digital garden · tended weekly</p>
+    <h1>Field <em>Notes</em></h1>
+    <p class="lead">{SITE.description}</p>
+
+    <dl class="hero__stats">
+      <div>
+        <dt>Notes</dt>
+        <dd>{total}</dd>
+      </div>
+      <div>
+        <dt>Topics</dt>
+        <dd>{topicCount}</dd>
+      </div>
+      <div>
+        <dt>Evergreen</dt>
+        <dd>{maturityCounts.evergreen}</dd>
+      </div>
+    </dl>
+
+    <div class="garden-bar" role="img" aria-label={`Garden maturity: ${maturityCounts.seedling} seedling, ${maturityCounts.budding} budding, ${maturityCounts.evergreen} evergreen`}>
+      <span data-m="seedling" style={`flex-grow: ${pct(maturityCounts.seedling)}`}></span>
+      <span data-m="budding" style={`flex-grow: ${pct(maturityCounts.budding)}`}></span>
+      <span data-m="evergreen" style={`flex-grow: ${pct(maturityCounts.evergreen)}`}></span>
+    </div>
+    <p class="garden-bar__caption">
+      🌱 {maturityCounts.seedling} seedling · 🌿 {maturityCounts.budding} budding · 🌳 {maturityCounts.evergreen} evergreen
+    </p>
+  </header>
+
+  <section>
+    <h2 class="section-label">Fresh this week</h2>
+    <IdeaList
+      ideas={thisWeek}
+      emptyMessage="Nothing planted or tended in the last 7 days — the garden rests."
+    />
+  </section>
+
+  <section>
+    <h2 class="section-label">Recently tended</h2>
+    <IdeaList ideas={recent} />
+  </section>
+</BaseLayout>

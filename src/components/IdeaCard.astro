@@ -1,0 +1,43 @@
+---
+import MaturityBadge from '@/components/MaturityBadge.astro';
+import { SOURCE_ICONS } from '@/lib/icons';
+import { formatShortDate } from '@/lib/ideas';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  idea: CollectionEntry<'ideas'>;
+  showDate?: boolean;
+}
+
+const { idea, showDate = true } = Astro.props;
+const { title, summary, source, tags, maturity, added, updated } = idea.data;
+const icon = SOURCE_ICONS[source.type] ?? SOURCE_ICONS.other;
+---
+
+<li>
+  <a
+    href={`/ideas/${idea.slug}`}
+    class="idea-card"
+    data-maturity={maturity}
+    data-tags={tags.join(',')}
+    data-added={added.toISOString()}
+    data-updated={updated.toISOString()}
+  >
+    <div class="idea-card__header">
+      <span class="idea-card__icon" aria-hidden="true">{icon}</span>
+      <span class="idea-card__title">{title}</span>
+    </div>
+    <p class="idea-card__summary">{summary}</p>
+    <div class="idea-card__meta">
+      <MaturityBadge maturity={maturity} />
+      {tags.map((tag) => (
+        <span class="tag">{tag}</span>
+      ))}
+      {showDate && (
+        <time class="idea-card__date" datetime={updated.toISOString()}>
+          {formatShortDate(updated)}
+        </time>
+      )}
+    </div>
+  </a>
+</li>

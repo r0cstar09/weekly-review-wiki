@@ -1,0 +1,28 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { getTagCounts } from '@/lib/ideas';
+
+const ideas = await getCollection('ideas');
+const tagCounts = getTagCounts(ideas);
+const sortedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout title="Tags" wide>
+  <p class="page-eyebrow">Paths through the garden</p>
+  <h1>Tags</h1>
+  <p class="lead">{sortedTags.length} topics threading through {ideas.length} notes.</p>
+
+  {sortedTags.length > 0 ? (
+    <ul class="tag-cloud">
+      {sortedTags.map(([tag, count]) => (
+        <li>
+          <a href={`/tags/${encodeURIComponent(tag)}`}>{tag}</a>
+          <span class="tag-cloud__count">{count}</span>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p class="empty">No tags yet.</p>
+  )}
+</BaseLayout>

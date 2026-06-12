@@ -1,0 +1,29 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { formatMonthKey, getArchiveMonths } from '@/lib/ideas';
+
+const ideas = await getCollection('ideas');
+const months = [...getArchiveMonths(ideas).entries()];
+---
+
+<BaseLayout title="Archive" wide>
+  <p class="page-eyebrow">Season by season</p>
+  <h1>Archive</h1>
+  <p class="lead">Browse notes by the month they were last tended.</p>
+
+  {months.length > 0 ? (
+    <ul class="archive-list">
+      {months.map(([month, count]) => (
+        <li>
+          <a href={`/archive/${month}`}>
+            <span>{formatMonthKey(month)}</span>
+            <span>{count} {count === 1 ? 'entry' : 'entries'}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p class="empty">No archive dates yet.</p>
+  )}
+</BaseLayout>

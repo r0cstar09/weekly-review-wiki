@@ -1,0 +1,62 @@
+---
+import '@/styles/global.css';
+import SiteHeader from '@/components/SiteHeader.astro';
+import SiteFooter from '@/components/SiteFooter.astro';
+import Search from '@/components/Search.astro';
+import WikiSidebar from '@/components/WikiSidebar.astro';
+import { SITE } from '@/site.config';
+
+interface Props {
+  title?: string;
+  description?: string;
+  wide?: boolean;
+  sidebar?: boolean;
+}
+
+const {
+  title,
+  description = SITE.description,
+  wide = false,
+  sidebar = true,
+} = Astro.props;
+
+const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
+const containerClass = wide ? 'container container--wide' : 'container';
+const shellClass = sidebar ? 'site-shell site-shell--with-sidebar' : 'site-shell';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f1e6" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#11160f" />
+    <title>{pageTitle}</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:ital,opsz,wght@0,14..32,400..800;1,14..32,400..800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="alternate" type="application/rss+xml" title={SITE.title} href="/rss.xml" />
+  </head>
+  <body>
+    <SiteHeader />
+    <div class={shellClass}>
+      {sidebar && <WikiSidebar />}
+      <main>
+        <div class={containerClass} data-pagefind-body>
+          <slot />
+        </div>
+      </main>
+    </div>
+    <SiteFooter />
+    <Search />
+  </body>
+</html>

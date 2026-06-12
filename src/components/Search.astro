@@ -1,0 +1,65 @@
+---
+// Pagefind UI is injected at build time into dist/pagefind/
+// This component loads assets and wires the / keyboard shortcut.
+---
+
+<link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+<script src="/pagefind/pagefind-ui.js" is:inline></script>
+
+<script is:inline>
+  function initSearch() {
+    const headerSlot = document.getElementById('header-search');
+    if (!headerSlot) return;
+
+    if (typeof PagefindUI === 'undefined') {
+      const fallback = document.createElement('span');
+      fallback.className = 'kbd-hint';
+      fallback.textContent = 'Search available after build';
+      headerSlot.replaceChildren(fallback);
+      return;
+    }
+
+    new PagefindUI({
+      element: '#header-search',
+      showSubResults: true,
+      showImages: false,
+      resetStyles: false,
+    });
+
+    function focusSearch() {
+      const input = headerSlot.querySelector('input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!(e.target instanceof Element)) return;
+      const link = e.target.closest('a[href="#header-search"]');
+      if (!link) return;
+      e.preventDefault();
+      focusSearch();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (
+        e.key === '/' &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA'
+      ) {
+        e.preventDefault();
+        focusSearch();
+      }
+    });
+  }
+
+  if (typeof PagefindUI !== 'undefined') {
+    initSearch();
+  } else {
+    window.addEventListener('load', initSearch);
+  }
+</script>

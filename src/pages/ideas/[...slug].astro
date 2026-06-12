@@ -1,0 +1,110 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import MaturityBadge from '@/components/MaturityBadge.astro';
+import IdeaList from '@/components/IdeaList.astro';
+import { getCollection, render } from 'astro:content';
+import { formatDate, formatSourceType, getBacklinks } from '@/lib/ideas';
+import { SOURCE_ICONS } from '@/lib/icons';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths = (async () => {
+  const ideas = await getCollection('ideas');
+  return ideas.map((idea) => ({
+    params: { slug: idea.slug },
+    props: { idea },
+  }));
+}) satisfies GetStaticPaths;
+
+const { idea } = Astro.props;
+
+const allIdeas = await getCollection('ideas');
+const slug = idea.slug;
+const backlinks = getBacklinks(slug, allIdeas);
+const relatedEntries = (idea.data.related ?? [])
+  .map((id) => allIdeas.find((e) => e.slug === id))
+  .filter((e): e is NonNullable<typeof e> => e !== undefined);
+
+const { Content } = await render(idea);
+const { title, summary, source, takeaways, tags, maturity, quotes, added, updated } =
+  idea.data;
+const icon = SOURCE_ICONS[source.type] ?? SOURCE_ICONS.other;
+---
+
+<BaseLayout title={title} description={summary}>
+  <article>
+    <header class="entry-header">
+      <div class="entry-header__eyebrow">
+        <MaturityBadge maturity={maturity} />
+        <span class="entry-header__dates">
+          planted {formatDate(added)} · tended {formatDate(updated)}
+        </span>
+      </div>
+      <h1>{title}</h1>
+      <p class="entry-summary">{summary}</p>
+
+      <div class="source-card">
+        <span class="source-card__icon" aria-hidden="true">{icon}</span>
+        <div class="source-card__body">
+          <span class="source-card__title">
+            {source.url ? (
+              <a href={source.url} rel="noopener noreferrer">{source.title}</a>
+            ) : (
+              source.title
+            )}
+          </span>
+          <span class="source-card__meta">
+            {formatSourceType(source.type)} · {source.author} · consumed{' '}
+            {formatDate(source.consumed_on)}
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <section class="takeaways">
+      <h2>Key takeaways</h2>
+      <ul>
+        {takeaways.map((t) => <li>{t}</li>)}
+      </ul>
+    </section>
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    {quotes && quotes.length > 0 && (
+      <section class="quotes">
+        <h2>Quotes worth keeping</h2>
+        {quotes.map((q) => <blockquote>{q}</blockquote>)}
+      </section>
+    )}
+
+    <footer style="margin-top: var(--space-lg);">
+      <ul class="tag-list">
+        {tags.map((tag) => (
+          <li>
+            <a href={`/tags/${encodeURIComponent(tag)}`} class="tag">{tag}</a>
+          </li>
+        ))}
+      </ul>
+    </footer>
+
+    {relatedEntries.length > 0 && (
+      <section class="no-print">
+        <h2 class="section-label">Related notes</h2>
+        <IdeaList ideas={relatedEntries} />
+      </section>
+    )}
+
+    {backlinks.length > 0 && (
+      <section class="backlinks no-print">
+        <h2 class="section-label">Backlinks</h2>
+        <p>Notes that link here — connections grow in both directions.</p>
+        <IdeaList ideas={backlinks} />
+      </section>
+    )}
+
+    <nav class="entry-footer-nav no-print" aria-label="Entry">
+      <a href="/ideas">← Back to all ideas</a>
+    </nav>
+  </article>
+</BaseLayout>

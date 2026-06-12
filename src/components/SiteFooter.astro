@@ -1,0 +1,23 @@
+---
+import { SITE } from '@/site.config';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer no-print">
+  <div class="site-footer__inner">
+    <div class="site-footer__brand">
+      <strong>{SITE.title}</strong>
+      <span>{SITE.description}</span>
+    </div>
+    <ul class="site-footer__nav">
+      <li><a href="/ideas">Ideas</a></li>
+      <li><a href="/tags">Tags</a></li>
+      <li><a href="/archive">Archive</a></li>
+      <li><a href="/rss.xml">RSS</a></li>
+    </ul>
+    <p class="site-footer__fleuron">
+      Tended by {SITE.author} · {year}
+    </p>
+  </div>
+</footer>
