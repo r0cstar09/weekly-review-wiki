@@ -6,7 +6,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
   <p class="page-eyebrow">Tailnet admin</p>
   <h1>Delete wiki articles</h1>
   <p class="lead">
-    This page talks to the Alienware wiki admin API over Tailscale Serve. It only works from devices connected to your Tailnet.
+    This delete tool lives inside the Astro site, but the controls only appear when this browser can reach Tony's Tailnet-only admin API.
   </p>
 
   <section class="admin-panel no-print" id="wiki-delete-admin">
@@ -20,14 +20,10 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
     </div>
 
     <div data-tailnet-only hidden>
-      <label for="wiki-admin-api-base">Admin API</label>
-      <input
-        id="wiki-admin-api-base"
-        data-api-base
-        type="url"
-        value="https://tonys-alienware-1.tail85fe36.ts.net/wiki-admin-api"
-        style="width: 100%; padding: .7rem; margin: .35rem 0 1rem;"
-      />
+      <p>
+        Tailnet verified. Deletes are soft-deleted locally, validated, built, committed,
+        pushed to GitHub <code>main</code>, and then removed from Vercel after redeploy.
+      </p>
       <label for="wiki-delete-filter">Filter articles</label>
       <input
         id="wiki-delete-filter"
@@ -43,10 +39,12 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
   <section>
     <h2>Security model</h2>
     <ul>
-      <li>The admin API runs on Alienware loopback only.</li>
-      <li>Tailscale Serve exposes it over HTTPS to your Tailnet only.</li>
+      <li>The delete UI is part of the Astro site.</li>
+      <li>The controls remain hidden until this browser reaches the Tailnet-only API.</li>
+      <li>The admin API runs on Alienware loopback and is exposed through Tailscale Serve HTTPS.</li>
       <li>Only Markdown files in <code>src/content/ideas/</code> can be deleted.</li>
-      <li>Deletes are soft deletes: files move to <code>.wiki-trash/</code>.</li>
+      <li>Deleted files move to external recovery trash at <code>/home/rootadmin/weekly-review-wiki-trash/</code>.</li>
+      <li>Successful deletes validate, build, commit, push to <code>main</code>, and rely on Vercel redeploy.</li>
     </ul>
   </section>
 

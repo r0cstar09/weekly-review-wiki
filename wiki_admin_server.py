@@ -5,6 +5,7 @@ Security model:
 - The service binds to 127.0.0.1 only.
 - It is exposed to phones/laptops through Tailscale Serve HTTPS, tailnet-only.
 - The Astro site reveals delete controls only after it can reach this Tailnet API.
+- Browser CORS is restricted to the Vercel/custom wiki origins.
 - It only soft-deletes Markdown idea files under src/content/ideas/.
 - Deleted files move to /home/rootadmin/weekly-review-wiki-trash/<timestamp>/src/content/ideas/<slug>.md.
 - A delete is not considered complete until related links are cleaned, validation/build pass,
@@ -16,29 +17,41 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 ROOT = Path(os.environ.get("WEEKLY_WIKI_ROOT", "/home/rootadmin/weekly-review-wiki")).resolve()
 IDEAS = (ROOT / "src/content/ideas").resolve()
 TRASH = Path(os.environ.get("WEEKLY_WIKI_TRASH", "/home/rootadmin/weekly-review-wiki-trash")).resolve()
+ALLOWED_ORIGINS = {
+    "https://wiki.tonymuzo.dev",
+    "https://weekly-review-wiki.vercel.app",
+}
+DELETE_LOCK = threading.Lock()
 
-app = FastAPI(title="Weekly Review Wiki Admin", version="1.1.0")
+app = FastAPI(title="Weekly Review Wiki Admin", version="1.2.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=sorted(ALLOWED_ORIGINS),
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["content-type"],
 )
 
 
 class DeleteRequest(BaseModel):
     path: str
+
+
+def reject_bad_browser_origin(request: Request) -> None:
+    origin = request.headers.get("origin")
+    if origin and origin not in ALLOWED_ORIGINS:
+        raise HTTPException(status_code=403, detail="Origin is not allowed for wiki admin")
 
 
 def resolve_cmd(cmd: list[str]) -> list[str]:
@@ -73,6 +86,12 @@ def require_ok(cmd: list[str], *, timeout: int = 180) -> subprocess.CompletedPro
             f"command failed: {' '.join(cmd)}\nSTDOUT:\n{proc.stdout[-4000:]}\nSTDERR:\n{proc.stderr[-4000:]}"
         )
     return proc
+
+
+def ensure_no_pending_content_changes() -> None:
+    status = require_ok(["git", "status", "--short", "--", "src/content/ideas"], timeout=60).stdout.strip()
+    if status:
+        raise RuntimeError(f"refusing delete with pending content changes:\n{status}")
 
 
 def safe_idea_path(rel: str) -> Path:
@@ -189,19 +208,14 @@ def rollback(src: Path, dest: Path, backups: dict[Path, str]) -> None:
         shutil.move(str(dest), str(src))
 
 
-def publish_delete(src: Path, dest: Path, changed_related: list[str]) -> dict[str, Any]:
-    # Validate the content graph first, then build the Astro site, then commit/push.
+def publish_delete(src: Path, changed_related: list[str]) -> dict[str, Any]:
     validate = require_ok(["npm", "run", "validate"], timeout=120)
     build = require_ok(["npm", "run", "build"], timeout=300)
 
-    require_ok(["git", "add", "-A", "src/content/ideas", ".gitignore"], timeout=60)
-    status = require_ok(["git", "status", "--short", "--", "src/content/ideas", ".gitignore"], timeout=60).stdout.strip()
+    require_ok(["git", "add", "-A", "src/content/ideas"], timeout=60)
+    status = require_ok(["git", "status", "--short", "--", "src/content/ideas"], timeout=60).stdout.strip()
     if not status:
-        return {
-            "committed": False,
-            "pushed": False,
-            "message": "No git changes remained after delete.",
-        }
+        return {"committed": False, "pushed": False, "message": "No git changes remained after delete."}
 
     commit_message = f"Delete wiki article {src.stem}"
     commit = require_ok(["git", "commit", "-m", commit_message], timeout=120)
@@ -221,50 +235,59 @@ def publish_delete(src: Path, dest: Path, changed_related: list[str]) -> dict[st
 
 @app.get("/health")
 @app.get("/wiki-admin-api/health")
-def health() -> dict[str, Any]:
+def health(request: Request) -> dict[str, Any]:
+    reject_bad_browser_origin(request)
     return {
         "ok": True,
         "root": str(ROOT),
         "ideas": str(IDEAS),
-        "security": "Astro-hidden UI + loopback-only service exposed through Tailscale Serve HTTPS tailnet-only",
-        "delete_semantics": "soft-delete, cleanup related links, validate/build, commit, push main",
+        "security": "Astro-hidden UI + loopback-only service exposed through Tailscale Serve HTTPS tailnet-only + restricted CORS origins",
+        "delete_semantics": "external soft-trash, cleanup related links, validate/build, commit, push main",
     }
 
 
 @app.get("/articles")
 @app.get("/wiki-admin-api/articles")
-def articles() -> dict[str, Any]:
+def articles(request: Request) -> dict[str, Any]:
+    reject_bad_browser_origin(request)
     rows = article_rows()
     return {"root": str(ROOT), "count": len(rows), "articles": rows}
 
 
 @app.post("/delete")
 @app.post("/wiki-admin-api/delete")
-def delete_article(req: DeleteRequest) -> dict[str, Any]:
-    src = safe_idea_path(req.path)
-    slug = src.stem
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    dest = TRASH / stamp / "src/content/ideas" / src.name
-    dest.parent.mkdir(parents=True, exist_ok=True)
-
-    backups = {path: path.read_text(encoding="utf-8") for path in IDEAS.glob("*.md") if path.exists()}
-
+def delete_article(req: DeleteRequest, request: Request) -> dict[str, Any]:
+    reject_bad_browser_origin(request)
+    if not DELETE_LOCK.acquire(blocking=False):
+        raise HTTPException(status_code=409, detail="Another delete is already running")
     try:
-        shutil.move(str(src), str(dest))
-        changed_related = cleanup_related_references(slug)
-        publish = publish_delete(src, dest, changed_related)
-    except Exception as exc:
-        rollback(src, dest, backups)
-        raise HTTPException(status_code=409, detail=f"Delete rolled back: {exc}") from exc
+        ensure_no_pending_content_changes()
+        src = safe_idea_path(req.path)
+        slug = src.stem
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        dest = TRASH / stamp / "src/content/ideas" / src.name
+        dest.parent.mkdir(parents=True, exist_ok=True)
 
-    return {
-        "ok": True,
-        "deleted": src.relative_to(IDEAS).as_posix(),
-        "trash_path": str(dest),
-        "changed_related": changed_related,
-        "publish": publish,
-        "message": "Article moved to external wiki trash, related links cleaned, validation/build passed, deletion committed and pushed to main.",
-    }
+        backups = {path: path.read_text(encoding="utf-8") for path in IDEAS.glob("*.md") if path.exists()}
+
+        try:
+            shutil.move(str(src), str(dest))
+            changed_related = cleanup_related_references(slug)
+            publish = publish_delete(src, changed_related)
+        except Exception as exc:
+            rollback(src, dest, backups)
+            raise HTTPException(status_code=409, detail=f"Delete rolled back: {exc}") from exc
+
+        return {
+            "ok": True,
+            "deleted": src.relative_to(IDEAS).as_posix(),
+            "trash_path": str(dest),
+            "changed_related": changed_related,
+            "publish": publish,
+            "message": "Article moved to external trash, related links cleaned, validation/build passed, deletion committed and pushed to main.",
+        }
+    finally:
+        DELETE_LOCK.release()
 
 
 if __name__ == "__main__":
