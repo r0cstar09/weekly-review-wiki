@@ -41,14 +41,28 @@ class DeleteRequest(BaseModel):
     path: str
 
 
+def resolve_cmd(cmd: list[str]) -> list[str]:
+    overrides = {
+        "npm": os.environ.get("NPM_BIN", "/home/rootadmin/.local/bin/npm"),
+        "node": os.environ.get("NODE_BIN", "/home/rootadmin/.local/bin/node"),
+        "git": os.environ.get("GIT_BIN", "/usr/bin/git"),
+    }
+    if cmd and cmd[0] in overrides and Path(overrides[cmd[0]]).exists():
+        return [overrides[cmd[0]], *cmd[1:]]
+    return cmd
+
+
 def run(cmd: list[str], *, timeout: int = 180) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    env["PATH"] = "/home/rootadmin/.local/bin:/usr/local/bin:/usr/bin:/bin:" + env.get("PATH", "")
     return subprocess.run(
-        cmd,
+        resolve_cmd(cmd),
         cwd=ROOT,
         text=True,
         capture_output=True,
         timeout=timeout,
         check=False,
+        env=env,
     )
 
 
