@@ -32,6 +32,7 @@ const ideasSchema = z
     maturity: z.enum(['seedling', 'budding', 'evergreen']),
     added: z.coerce.date(),
     updated: z.coerce.date(),
+    pinned: z.boolean().optional(),
     related: z.array(z.string()).optional(),
     quotes: z.array(z.string()).optional(),
   })

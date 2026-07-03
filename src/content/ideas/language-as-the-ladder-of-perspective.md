@@ -22,6 +22,7 @@ tags:
 maturity: seedling
 added: 2026-07-03
 updated: 2026-07-03
+pinned: true
 related:
   - perspective-as-vibration
   - nested-identity

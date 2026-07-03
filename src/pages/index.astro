@@ -3,11 +3,13 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import IdeaList from '@/components/IdeaList.astro';
 import { SITE } from '@/site.config';
 import { getCollection } from 'astro:content';
-import { getTagCounts, getThisWeek, sortByUpdatedDesc } from '@/lib/ideas';
+import { getTagCounts, getThisWeek, sortByPinnedThenUpdatedDesc } from '@/lib/ideas';
 
 const allIdeas = await getCollection('ideas');
-const thisWeek = getThisWeek(allIdeas);
-const recent = sortByUpdatedDesc(allIdeas).slice(0, 6);
+const pinned = sortByPinnedThenUpdatedDesc(allIdeas.filter((idea) => idea.data.pinned));
+const unpinnedIdeas = allIdeas.filter((idea) => !idea.data.pinned);
+const thisWeek = getThisWeek(unpinnedIdeas);
+const recent = sortByPinnedThenUpdatedDesc(unpinnedIdeas).slice(0, 6);
 
 const topicCount = getTagCounts(allIdeas).size;
 const maturityCounts = { seedling: 0, budding: 0, evergreen: 0 };
@@ -48,6 +50,13 @@ const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
       🌱 {maturityCounts.seedling} seedling · 🌿 {maturityCounts.budding} budding · 🌳 {maturityCounts.evergreen} evergreen
     </p>
   </header>
+
+  {pinned.length > 0 && (
+    <section>
+      <h2 class="section-label">Pinned realizations</h2>
+      <IdeaList ideas={pinned} />
+    </section>
+  )}
 
   <section>
     <h2 class="section-label">Fresh this week</h2>

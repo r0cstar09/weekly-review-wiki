@@ -21,6 +21,7 @@ tags:
 maturity: seedling
 added: 2026-07-02
 updated: 2026-07-02
+pinned: true
 related:
   - secure-defaults
   - systems-thinking-decision-protocols

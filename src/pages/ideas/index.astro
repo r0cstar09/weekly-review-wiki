@@ -2,9 +2,9 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import IdeaCard from '@/components/IdeaCard.astro';
 import { getCollection } from 'astro:content';
-import { sortByUpdatedDesc } from '@/lib/ideas';
+import { sortByPinnedThenUpdatedDesc } from '@/lib/ideas';
 
-const allIdeas = sortByUpdatedDesc(await getCollection('ideas'));
+const allIdeas = sortByPinnedThenUpdatedDesc(await getCollection('ideas'));
 const allTags = [...new Set(allIdeas.flatMap((i) => i.data.tags))].sort();
 ---
 
@@ -96,6 +96,9 @@ const allTags = [...new Set(allIdeas.flatMap((i) => i.data.tags))].sort();
     const sorted = [...cardData];
 
     sorted.sort((a, b) => {
+      if (a.li.dataset.pinned !== b.li.dataset.pinned) {
+        return a.li.dataset.pinned === 'true' ? -1 : 1;
+      }
       if (mode === 'updated-desc') return b.updated - a.updated;
       if (mode === 'updated-asc') return a.updated - b.updated;
       if (mode === 'added-desc') return b.added - a.added;

@@ -10,7 +10,7 @@ interface Props {
 }
 
 const { idea, showDate = true } = Astro.props;
-const { title, summary, source, tags, maturity, added, updated } = idea.data;
+const { title, summary, source, tags, maturity, added, updated, pinned } = idea.data;
 const icon = SOURCE_ICONS[source.type] ?? SOURCE_ICONS.other;
 ---
 
@@ -18,6 +18,7 @@ const icon = SOURCE_ICONS[source.type] ?? SOURCE_ICONS.other;
   <a
     href={`/ideas/${idea.slug}`}
     class="idea-card"
+    data-pinned={pinned ? 'true' : 'false'}
     data-maturity={maturity}
     data-tags={tags.join(',')}
     data-added={added.toISOString()}
@@ -30,6 +31,7 @@ const icon = SOURCE_ICONS[source.type] ?? SOURCE_ICONS.other;
     <p class="idea-card__summary">{summary}</p>
     <div class="idea-card__meta">
       <MaturityBadge maturity={maturity} />
+      {pinned && <span class="badge badge--pinned">📌 Pinned</span>}
       {tags.map((tag) => (
         <span class="tag">{tag}</span>
       ))}

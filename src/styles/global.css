@@ -757,6 +757,10 @@ main {
     box-shadow 0.2s ease;
 }
 
+.idea-card[data-pinned='true'] {
+  --m-color: var(--accent-strong);
+}
+
 .idea-card[data-maturity='seedling'] {
   --m-color: var(--gold);
 }
@@ -925,6 +929,12 @@ main {
   color: var(--badge-evergreen);
   border-color: color-mix(in srgb, var(--badge-evergreen) 38%, var(--border));
   background: color-mix(in srgb, var(--badge-evergreen) 9%, var(--bg-elevated));
+}
+
+.badge--pinned {
+  color: var(--accent-strong);
+  border-color: color-mix(in srgb, var(--accent-strong) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent-strong) 10%, var(--bg-elevated));
 }
 
 .tag {

@@ -2,10 +2,16 @@ import type { CollectionEntry } from 'astro:content';
 
 export type IdeaEntry = CollectionEntry<'ideas'>;
 
-export function sortByUpdatedDesc(entries: IdeaEntry[]): IdeaEntry[] {
+export function sortByPinnedThenUpdatedDesc(entries: IdeaEntry[]): IdeaEntry[] {
   return [...entries].sort(
-    (a, b) => b.data.updated.getTime() - a.data.updated.getTime(),
+    (a, b) =>
+      Number(Boolean(b.data.pinned)) - Number(Boolean(a.data.pinned)) ||
+      b.data.updated.getTime() - a.data.updated.getTime(),
   );
+}
+
+export function sortByUpdatedDesc(entries: IdeaEntry[]): IdeaEntry[] {
+  return sortByPinnedThenUpdatedDesc(entries);
 }
 
 export function getThisWeek(entries: IdeaEntry[]): IdeaEntry[] {
@@ -13,7 +19,7 @@ export function getThisWeek(entries: IdeaEntry[]): IdeaEntry[] {
   weekAgo.setDate(weekAgo.getDate() - 7);
   weekAgo.setHours(0, 0, 0, 0);
 
-  return sortByUpdatedDesc(
+  return sortByPinnedThenUpdatedDesc(
     entries.filter(
       (e) => e.data.added >= weekAgo || e.data.updated >= weekAgo,
     ),

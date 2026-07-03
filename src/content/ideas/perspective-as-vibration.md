@@ -21,6 +21,7 @@ tags:
 maturity: seedling
 added: 2026-07-03
 updated: 2026-07-03
+pinned: true
 related:
   - systems-thinking-decision-protocols
 quotes:
