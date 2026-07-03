@@ -1,0 +1,44 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Delete Articles" description="Tailnet-only wiki article deletion" wide>
+  <p class="page-eyebrow">Tailnet admin</p>
+  <h1>Delete wiki articles</h1>
+  <p class="lead">
+    This page talks to the Alienware wiki admin API over Tailscale Serve. It only works from devices connected to your Tailnet.
+  </p>
+
+  <section class="admin-panel no-print" id="wiki-delete-admin">
+    <p><strong>Status:</strong> <span data-status>Loading admin API…</span></p>
+    <label for="wiki-admin-api-base">Admin API</label>
+    <input
+      id="wiki-admin-api-base"
+      data-api-base
+      type="url"
+      value="https://tonys-alienware-1.tail85fe36.ts.net/wiki-admin-api"
+      style="width: 100%; padding: .7rem; margin: .35rem 0 1rem;"
+    />
+    <label for="wiki-delete-filter">Filter articles</label>
+    <input
+      id="wiki-delete-filter"
+      data-filter
+      type="search"
+      placeholder="Filter by title, slug, or path"
+      style="width: 100%; padding: .7rem; margin: .35rem 0 1rem;"
+    />
+    <div data-list></div>
+  </section>
+
+  <section>
+    <h2>Security model</h2>
+    <ul>
+      <li>The admin API runs on Alienware loopback only.</li>
+      <li>Tailscale Serve exposes it over HTTPS to your Tailnet only.</li>
+      <li>Only Markdown files in <code>src/content/ideas/</code> can be deleted.</li>
+      <li>Deletes are soft deletes: files move to <code>.wiki-trash/</code>.</li>
+    </ul>
+  </section>
+
+  <script is:inline src="/assets/wiki-delete-admin.js"></script>
+</BaseLayout>
