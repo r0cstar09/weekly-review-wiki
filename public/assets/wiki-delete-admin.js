@@ -6,6 +6,8 @@
   const list = root.querySelector('[data-list]');
   const filter = root.querySelector('[data-filter]');
   const apiInput = root.querySelector('[data-api-base]');
+  const locked = root.querySelector('[data-locked]');
+  const tailnetOnly = root.querySelector('[data-tailnet-only]');
   let articles = [];
 
   const savedApiBase = localStorage.getItem('weeklyWikiAdminApiBase');
@@ -18,6 +20,12 @@
   function setStatus(text, bad = false) {
     status.textContent = text;
     status.style.color = bad ? '#ff6b6b' : '#16794c';
+  }
+
+  function setTailnetVisible(visible) {
+    if (tailnetOnly) tailnetOnly.hidden = !visible;
+    if (locked) locked.hidden = visible;
+    document.documentElement.dataset.tailnet = visible ? 'true' : 'false';
   }
 
   function escapeHtml(s) {
@@ -42,27 +50,33 @@
   }
 
   async function load() {
+    setTailnetVisible(false);
     try {
       const base = apiBase();
       if (!base) throw new Error('Missing admin API URL');
       localStorage.setItem('weeklyWikiAdminApiBase', base);
-      const health = await fetch(`${base}/health`, { cache: 'no-store' });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3500);
+      const health = await fetch(`${base}/health`, { cache: 'no-store', signal: controller.signal });
+      clearTimeout(timeout);
       if (!health.ok) throw new Error(`health returned ${health.status}`);
       const res = await fetch(`${base}/articles`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`article list returned ${res.status}`);
       const data = await res.json();
       articles = data.articles || [];
-      setStatus(`Connected to ${base}; ${articles.length} articles found.`);
+      setTailnetVisible(true);
+      setStatus(`Tailnet verified. Connected to ${base}; ${articles.length} articles found.`);
       render();
     } catch (err) {
-      setStatus(`Cannot reach wiki admin API. Connect this device to Tailscale and confirm weekly-wiki-admin.service + Tailscale Serve are running. ${err.message}`, true);
-      list.innerHTML = '';
+      setTailnetVisible(false);
+      setStatus(`Delete controls hidden. Connect this device to Tailscale and confirm weekly-wiki-admin.service + Tailscale Serve are running. ${err.message}`, true);
+      if (list) list.innerHTML = '';
     }
   }
 
-  filter.addEventListener('input', render);
-  apiInput.addEventListener('change', load);
-  list.addEventListener('click', async (event) => {
+  filter?.addEventListener('input', render);
+  apiInput?.addEventListener('change', load);
+  list?.addEventListener('click', async (event) => {
     const button = event.target.closest('button[data-delete]');
     if (!button) return;
     const path = button.getAttribute('data-delete');
