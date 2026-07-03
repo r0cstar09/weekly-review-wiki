@@ -23,9 +23,7 @@ added: 2026-07-02
 updated: 2026-07-02
 pinned: true
 related:
-  - secure-defaults
   - systems-thinking-decision-protocols
-  - security-review-cadence
 quotes:
   - "Money follows movement."
   - "Movement follows order."

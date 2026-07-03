@@ -22,7 +22,6 @@ added: 2026-07-02
 updated: 2026-07-02
 related:
   - systems-thinking-decision-protocols
-  - security-review-cadence
   - daily-summary-2026-06-19
 quotes:
   - "Agent value = repeated pain + clear input + clear output + approval checkpoint."

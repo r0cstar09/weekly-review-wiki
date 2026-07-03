@@ -22,9 +22,6 @@ tags:
 maturity: seedling
 added: 2026-06-15
 updated: 2026-06-15
-related:
-  - detection-engineering-loop
-  - security-review-cadence
 quotes:
   - "Systems thinking is the ability to see that pattern before you act."
   - "When you attach a reward to the wrong thing, people optimize the system for the rewards and ignore the goal."
