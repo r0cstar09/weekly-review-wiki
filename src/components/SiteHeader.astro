@@ -2,6 +2,12 @@
 import { SITE } from '@/site.config';
 
 const path = Astro.url.pathname;
+const navItems = [
+  { href: '/', label: 'Home', deck: 'overview', icon: '⌂' },
+  { href: '/ideas', label: 'Ideas', deck: 'field notes', icon: '◇' },
+  { href: '/tags', label: 'Tags', deck: 'topic graph', icon: '#' },
+  { href: '/archive', label: 'Archive', deck: 'timeline', icon: '▦' },
+];
 
 function isActive(href: string): boolean {
   if (href === '/') return path === '/';
@@ -11,37 +17,33 @@ function isActive(href: string): boolean {
 
 <header class="site-header">
   <div class="site-header__inner">
-    <a href="/" class="site-header__brand">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M19 4c-7.5 0-13 4.5-13 11 0 1.7.4 3.2 1 4.3.4-2.8 1.8-6.6 5.5-9.8-2.6 3.5-3.9 7-4.2 10C9.3 20.4 10.6 21 12 21c6 0 8-7.6 8-13 0-1.5-.3-2.9-1-4z"
-            fill="currentColor"
-          />
-        </svg>
+    <a href="/" class="site-header__brand" aria-label={`${SITE.title} home`}>
+      <img class="brand-mark" src="/icons/icon-cyber.svg" alt="" width="40" height="40" />
+      <span class="brand-copy">
+        <strong>{SITE.title}</strong>
+        <em>knowledge graph online</em>
       </span>
-      {SITE.title}
     </a>
     <nav aria-label="Main">
       <ul class="site-nav">
+        {navItems.map((item) => (
+          <li>
+            <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
+              <span class="site-nav__icon" aria-hidden="true">{item.icon}</span>
+              <span class="site-nav__text">
+                <strong>{item.label}</strong>
+                <em>{item.deck}</em>
+              </span>
+            </a>
+          </li>
+        ))}
         <li>
-          <a href="/ideas" aria-current={isActive('/ideas') ? 'page' : undefined}>
-            Ideas
-          </a>
-        </li>
-        <li>
-          <a href="/tags" aria-current={isActive('/tags') ? 'page' : undefined}>
-            Tags
-          </a>
-        </li>
-        <li>
-          <a href="/archive" aria-current={isActive('/archive') ? 'page' : undefined}>
-            Archive
-          </a>
-        </li>
-        <li>
-          <a href="#header-search" class="no-print">
-            Search <span class="kbd-hint">/</span>
+          <a href="#header-search" class="no-print site-nav__search">
+            <span class="site-nav__icon" aria-hidden="true">⌕</span>
+            <span class="site-nav__text">
+              <strong>Search</strong>
+              <em>press /</em>
+            </span>
           </a>
         </li>
       </ul>
