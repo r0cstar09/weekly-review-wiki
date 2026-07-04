@@ -23,6 +23,14 @@ const {
 const pageTitle = title ? `${title} · ${SITE.title}` : SITE.title;
 const containerClass = wide ? 'container container--wide' : 'container';
 const shellClass = sidebar ? 'site-shell site-shell--with-sidebar' : 'site-shell';
+const path = Astro.url.pathname;
+const appNavItems = [
+  { href: '/', label: 'Home', icon: '⌂', active: path === '/' },
+  { href: '/ideas', label: 'Ideas', icon: '◇', active: path.startsWith('/ideas') },
+  { href: '/tags', label: 'Tags', icon: '#', active: path.startsWith('/tags') },
+  { href: '/archive', label: 'Archive', icon: '▦', active: path.startsWith('/archive') },
+  { href: '#header-search', label: 'Search', icon: '⌕', active: false },
+];
 ---
 
 <!doctype html>
@@ -37,12 +45,10 @@ const shellClass = sidebar ? 'site-shell site-shell--with-sidebar' : 'site-shell
     <meta name="apple-mobile-web-app-title" content="Wiki" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="icon" href="/icons/icon-cyber.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png" />
     <title>{pageTitle}</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E"
-    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -62,6 +68,14 @@ const shellClass = sidebar ? 'site-shell site-shell--with-sidebar' : 'site-shell
       </main>
     </div>
     <SiteFooter />
+    <nav class="wiki-app-nav no-print" aria-label="Primary mobile navigation">
+      {appNavItems.map((item) => (
+        <a class="wiki-app-nav__link" href={item.href} aria-current={item.active ? 'page' : undefined}>
+          <span class="wiki-app-nav__icon" aria-hidden="true">{item.icon}</span>
+          <span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
     <Search />
     <script is:inline src="/assets/tailnet-admin-visibility.js"></script>
     <script is:inline>
