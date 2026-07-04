@@ -1,0 +1,18 @@
+{
+  "name": "Field Notes",
+  "short_name": "Wiki",
+  "description": "Tony's weekly-review wiki and field notes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f1e6",
+  "theme_color": "#11160f",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
