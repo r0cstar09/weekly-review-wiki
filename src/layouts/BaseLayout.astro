@@ -59,6 +59,12 @@ const appNavItems = [
   </head>
   <body>
     <SiteHeader />
+    <section class="wiki-command-ribbon no-print" aria-label="Wiki quick map">
+      <a href="/ideas"><span>◇</span><strong>Ideas</strong><em>living notes</em></a>
+      <a href="/tags"><span>#</span><strong>Tags</strong><em>clusters</em></a>
+      <a href="/archive"><span>▦</span><strong>Archive</strong><em>timeline</em></a>
+      <a href="#header-search"><span>⌕</span><strong>Search</strong><em>recall</em></a>
+    </section>
     <div class={shellClass}>
       {sidebar && <WikiSidebar />}
       <main>
