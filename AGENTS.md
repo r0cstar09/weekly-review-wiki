@@ -123,7 +123,26 @@ Start with a single root node and branch until every leaf is actionable. Link ea
 2. Create `src/content/ideas/<slug>.md` following this contract.
 3. Run `npm run validate` — fix every error (line-referenced).
 4. Run `npm run build` to confirm Astro + Pagefind succeed.
-5. Commit only when both pass.
+5. Commit and push `main` only when both pass.
+6. Deploy the canonical Cloud Run site through the Alienware deployment authority:
+
+```bash
+WIKI_VERIFY_PATH="/ideas/<slug>/" \
+WIKI_VERIFY_MARKER="<exact article title>" \
+./scripts/deploy-production-via-alienware.sh
+```
+
+7. Verify the content-specific marker at `https://wiki.tonymuzo.dev/ideas/<slug>/` before reporting success.
+
+## Production routing
+
+- **Canonical public site:** `https://wiki.tonymuzo.dev`
+- **Canonical origin:** Google Cloud Run service `weekly-review-wiki` in `us-east1`, reached through Cloudflare.
+- **Automatic mirror:** pushes to `main` also update `https://weekly-review-wiki.vercel.app`.
+- **Important:** a successful Git push or Vercel deployment does **not** update the canonical Cloud Run origin. Always run the deployment helper above.
+- The deployment helper intentionally builds/deploys from Alienware, where the least-privilege GCP deployer credential is configured. Do not grant Cloud Run deployment rights to the VPS HA lease account.
+
+If Alienware is offline, push `main`, verify the Vercel mirror, and report the canonical deployment as pending. Never claim `wiki.tonymuzo.dev` is current until its article-specific marker passes.
 
 ## Failure mode (by design)
 

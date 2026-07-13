@@ -21,15 +21,19 @@ npm run preview    # serve dist/ (search works here)
 
 ## Deploy
 
-Static `dist/` output — deploy to Netlify, Vercel, or Cloudflare Pages with defaults:
+The canonical site is `https://wiki.tonymuzo.dev`, backed by the `weekly-review-wiki` Cloud Run service through Cloudflare. Pushes to `main` also update the public Vercel mirror at `https://weekly-review-wiki.vercel.app`, but **Git/Vercel alone do not update the canonical origin**.
 
-| Platform | Build command | Output |
-|----------|---------------|--------|
-| Netlify | `npm run build` | `dist` |
-| Vercel | `npm run build` | `dist` |
-| Cloudflare Pages | `npm run build` | `dist` |
+After validation, build, commit, and push:
 
-Update `site` in `astro.config.mjs` and `src/site.config.ts` with your production URL (needed for RSS).
+```bash
+WIKI_VERIFY_PATH="/ideas/<slug>/" \
+WIKI_VERIFY_MARKER="<exact article title>" \
+./scripts/deploy-production-via-alienware.sh
+```
+
+The helper checks that local `main` is clean and matches `origin/main`, asks the Alienware deployment authority to build an immutable image with Cloud Build, deploys it to Cloud Run, and verifies the article marker through the canonical Cloudflare URL. Alienware holds the deployment credential; the VPS HA lease identity intentionally does not have Cloud Run deployment access.
+
+Update `site` in `astro.config.mjs` and `src/site.config.ts` if the canonical production URL changes (needed for RSS).
 
 ## Features
 
