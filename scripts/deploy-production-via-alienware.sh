@@ -2,7 +2,8 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-deploy_host="${WIKI_DEPLOY_HOST:-rootadmin@alienware.tail85fe36.ts.net}"
+# Tony's Alienware Tailscale IP; override with WIKI_DEPLOY_HOST if the device is renamed/re-enrolled.
+deploy_host="${WIKI_DEPLOY_HOST:-rootadmin@100.119.113.11}"
 project='hermes-ai-agent-497702'
 region='us-east1'
 service='weekly-review-wiki'
